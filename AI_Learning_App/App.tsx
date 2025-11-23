@@ -9,7 +9,7 @@ function App() {
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <View style={styles.container}>
-        <Text style={styles.text}>Hello Wordsdfsdsld2đâsdas</Text>
+        <Text style={styles.text}>Hello World</Text>
       </View>
     </SafeAreaProvider>
   );

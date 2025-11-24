@@ -10,8 +10,8 @@ const Stack = createNativeStackNavigator();
 
 const RootNavigator = () => {
   // tạm thời hardcode
-  const isLoggedIn = false; // false → luôn vào Auth (Start / Login / Register)
-  const role: 'student' | 'teacher' = 'student';
+  const isLoggedIn = true; // false → luôn vào Auth (Start / Login / Register)
+  const role: 'student' | 'teacher' = 'teacher';
 
   return (
     <NavigationContainer>
@@ -19,10 +19,10 @@ const RootNavigator = () => {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!isLoggedIn ? (
           <Stack.Screen name="Auth" component={AuthStack} />
-        ) : role === 'student' ? (
-          <Stack.Screen name="Student" component={StudentStack} />
+        ) : role === 'teacher' ? (
+          <Stack.Screen name="Student" component={TeacherStack} />
         ) : (
-          <Stack.Screen name="Teacher" component={TeacherStack} />
+          <Stack.Screen name="Teacher" component={StudentStack} />
         )}
       </Stack.Navigator>
     </NavigationContainer>

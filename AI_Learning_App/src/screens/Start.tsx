@@ -1,55 +1,47 @@
 // src/screens/Start.tsx
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  SafeAreaView,
-  StatusBar,
-} from 'react-native';
+import { View, Text, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 
 const StartScreen = ({ navigation }: any) => {
-  const handleLogin = () => {
-    navigation.navigate('Login');
-  };
-
-  const handleRegister = () => {
-    navigation.navigate('Register');
-  };
+  const handleLogin = () => navigation.navigate('Login');
+  const handleRegister = () => navigation.navigate('Register');
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView className="flex-1 bg-teal-500">
       <StatusBar barStyle="light-content" />
 
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Chấm thi</Text>
-          <Text style={styles.subtitle}>Chấm thi bằng điện thoại</Text>
+      <View className="flex-1 px-6 pt-4">
+        {/* Header */}
+        <View className="items-center mt-10 mb-10">
+          <Text className="text-4xl font-bold text-white mb-2">Chấm thi</Text>
+          <Text className="text-base text-teal-100">Chấm thi bằng điện thoại</Text>
         </View>
 
-        <View style={styles.buttonsWrapper}>
-          <TouchableOpacity style={styles.mainButton} onPress={handleLogin}>
-            <Text style={styles.mainButtonText}>Đăng nhập</Text>
+        {/* Buttons */}
+        <View className="items-center">
+          <TouchableOpacity
+            className="bg-white rounded-xl py-3 px-4 w-full mb-3 shadow-md items-center justify-center"
+            onPress={handleLogin}
+          >
+            <Text className="text-lg font-semibold text-gray-800">Đăng nhập</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.mainButton, styles.outlineButton]}
+            className="border-2 border-white rounded-xl py-3 px-4 w-full mb-3 items-center justify-center"
             onPress={handleRegister}
           >
-            <Text style={[styles.mainButtonText, styles.outlineButtonText]}>
-              Đăng ký
-            </Text>
+            <Text className="text-lg font-semibold text-white">Đăng ký</Text>
           </TouchableOpacity>
 
-          <Text style={styles.policyText}>
+          <Text className="mt-2 text-xs text-white text-center">
             Bằng việc tiếp tục, tôi đã đọc và đồng ý với{' '}
-            <Text style={styles.policyLink}>Chính sách quyền riêng tư</Text>
+            <Text className="underline text-blue-600">Chính sách quyền riêng tư</Text>
           </Text>
         </View>
 
-        <View style={styles.illustrationWrapper}>
-          <Text style={styles.bottomText}>Tốc độ chính xác chỉ trong 5 giây</Text>
+        {/* Illustration / Bottom text */}
+        <View className="flex-1 justify-end items-center pb-6">
+          <Text className="text-sm text-white">Tốc độ chính xác chỉ trong 5 giây</Text>
         </View>
       </View>
     </SafeAreaView>
@@ -57,79 +49,3 @@ const StartScreen = ({ navigation }: any) => {
 };
 
 export default StartScreen;
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#00C9A7',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#00C9A7',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-  },
-  header: {
-    alignItems: 'center',
-    marginTop: 40,
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#E9FEFF',
-  },
-  buttonsWrapper: {
-    alignItems: 'center',
-  },
-  mainButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    width: '100%',
-    marginBottom: 12,
-    elevation: 3,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mainButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#222222',
-  },
-  outlineButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    elevation: 0,
-  },
-  outlineButtonText: {
-    color: '#FFFFFF',
-  },
-  policyText: {
-    marginTop: 8,
-    fontSize: 12,
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-  policyLink: {
-    textDecorationLine: 'underline',
-    color: '#0057FF',
-  },
-  illustrationWrapper: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingBottom: 24,
-  },
-  bottomText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-  },
-});

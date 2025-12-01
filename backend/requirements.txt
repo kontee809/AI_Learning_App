@@ -1,0 +1,7 @@
+Flask==2.2.2
+Flask-SQLAlchemy==2.5.1
+werkzeug==2.2.2
+python-dotenv==0.21.0
+mysql-connector-python==8.0.29
+SQLAlchemy==1.4.49   # hoặc bất kỳ bản 1.4.x ổn định
+Flask-JWT-Extended==4.6.0

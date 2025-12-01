@@ -1,4 +1,4 @@
-// src/screens/Teacher/ManageClassScreen.tsx
+// screens/GradeListScreen.tsx
 import React, { useState } from "react";
 import {
   SafeAreaView,
@@ -7,76 +7,72 @@ import {
   FlatList,
   Modal,
   TextInput,
-  Pressable,
   TouchableOpacity,
+  Pressable,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 
-type ClassItem = {
+type GradeItem = {
   id: string;
-  name: string;
+  title: string;
   datetime: string;
-  NOS: number;
-  code: string;
+  score: number;
 };
 
-const CLASS_DATA: ClassItem[] = [
-  {
-    id: "1", name: "TOEIC28", datetime: "25/11/2025, 09:52",
-    NOS: 30,
-    code: "123456"
-  },
-  {
-    id: "2", name: "TOEIC29", datetime: "25/11/2025, 09:52",
-    NOS: 10,
-    code: "654321"
-  },
+const DUMMY_GRADES: GradeItem[] = [
+  { id: "1", title: "TEST 1", datetime: "25/11/2025, 09:52", score: 10,  },
+  { id: "2", title: "TEST 2", datetime: "25/12/2025, 09:52", score: 10,  },
 ];
 
-const ManageClassScreen: React.FC = () => {
+const GradeListScreen: React.FC = () => {
+  const route = useRoute<any>();
   const navigation = useNavigation<any>();
+  const { className = "" } = route.params || {};
 
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [joinCode, setJoinCode] = useState("");
-  const [className, setClassName] = useState("");
-
-  const generateCode = () => {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setJoinCode(code);
-  };
+  const [exerciseTitle, setExerciseTitle] = useState("");
+  const [exerciseScore, setExerciseScore] = useState("");
+  const [questionCount, setQuestionCount] = useState("");
 
   const openModal = () => {
-    generateCode();
-    setClassName("");
+    setExerciseTitle("");
+    setExerciseScore("");
+    setQuestionCount("");
     setIsModalVisible(true);
   };
 
   const closeModal = () => setIsModalVisible(false);
 
-  const handleSaveClass = () => {
-    console.log("Tên lớp:", className, "Mã:", joinCode);
+  const handleSaveExercise = () => {
+    // TODO: lưu dữ liệu bài kiểm tra
+    console.log({
+      exerciseTitle,
+      exerciseScore,
+      questionCount,
+    });
     closeModal();
   };
 
-  const renderItem = ({ item }: { item: ClassItem }) => (
+  const renderItem = ({ item }: { item: GradeItem }) => (
     <Pressable
       className="bg-white rounded-2xl px-4 py-3 mb-3 flex-row items-center justify-between"
       onPress={() =>
-        navigation.navigate("GradeList", {
-          classId: item.id,
-          className: item.name,
+        navigation.navigate("ExamDetail", {
+          examId: item.id,
+          examTitle: item.title,   // hoặc truyền thêm className nếu muốn
         })
       }
     >
       <View>
         <Text className="text-base font-semibold text-slate-900">
-          {item.name}
+          {item.title}
         </Text>
         <Text className="text-xs text-slate-500 mt-1">{item.datetime}</Text>
-        <Text className="text-xs text-slate-500 mt-1">Sĩ số: {item.NOS}</Text>
       </View>
 
-      <Text className="text-base font-semibold text-slate-900">{item.code}</Text>
+      <Text className="text-base font-semibold text-slate-900">
+        {item.score}
+      </Text>
     </Pressable>
   );
 
@@ -90,10 +86,17 @@ const ManageClassScreen: React.FC = () => {
         </View>
 
         <View className="flex-row items-center justify-between">
-          <View className="w-8 h-8" />
+          <TouchableOpacity
+            className="w-8 h-8 items-center justify-center"
+            onPress={() => navigation.goBack()}
+          >
+            <Text className="text-2xl text-white">‹</Text>
+          </TouchableOpacity>
+
           <Text className="text-base font-semibold text-white">
-            Danh sách lớp
+            {className}
           </Text>
+
           <TouchableOpacity
             activeOpacity={0.6}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -108,7 +111,7 @@ const ManageClassScreen: React.FC = () => {
       {/* Nội dung */}
       <View className="flex-1 px-4 pt-4 bg-slate-100">
         <FlatList
-          data={CLASS_DATA}
+          data={DUMMY_GRADES}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
@@ -116,7 +119,7 @@ const ManageClassScreen: React.FC = () => {
         />
       </View>
 
-      {/* Modal tạo lớp */}
+      {/* Modal tạo bài kiểm tra */}
       <Modal
         visible={isModalVisible}
         animationType="slide"
@@ -127,36 +130,54 @@ const ManageClassScreen: React.FC = () => {
           <View className="bg-white rounded-t-3xl px-4 pt-4 pb-6">
             <View className="w-12 h-1.5 bg-slate-300 rounded-full self-center mb-4" />
             <Text className="text-base font-semibold text-center mb-4">
-              Tạo lớp học
+              Thêm bài kiểm tra
             </Text>
 
+            {/* Tên bài */}
             <Text className="text-sm font-semibold text-slate-800 mb-2">
-              Mã tham gia
+              Tên bài
             </Text>
-            <View className="flex-row items-center bg-slate-100 rounded-2xl px-4 py-3 mb-4 justify-between">
-              <Text className="text-lg font-semibold text-slate-900">
-                {joinCode}
-              </Text>
-              <Pressable onPress={generateCode}>
-                <Text className="text-xs text-indigo-600 font-semibold">
-                  Random lại
-                </Text>
-              </Pressable>
+            <View className="bg-slate-100 rounded-2xl px-4 py-2 mb-4">
+              <TextInput
+                className="text-base text-slate-900"
+                placeholder="VD: Bài kiểm tra 15 phút"
+                placeholderTextColor="#9CA3AF"
+                value={exerciseTitle}
+                onChangeText={setExerciseTitle}
+              />
             </View>
 
+            {/* Số điểm bài trắc nghiệm */}
             <Text className="text-sm font-semibold text-slate-800 mb-2">
-              Tên lớp học
+              Số điểm bài trắc nghiệm
+            </Text>
+            <View className="bg-slate-100 rounded-2xl px-4 py-2 mb-4">
+              <TextInput
+                className="text-base text-slate-900"
+                placeholder="VD: 10"
+                placeholderTextColor="#9CA3AF"
+                keyboardType="numeric"
+                value={exerciseScore}
+                onChangeText={setExerciseScore}
+              />
+            </View>
+
+            {/* Số câu hỏi */}
+            <Text className="text-sm font-semibold text-slate-800 mb-2">
+              Số câu hỏi
             </Text>
             <View className="bg-slate-100 rounded-2xl px-4 py-2 mb-6">
               <TextInput
                 className="text-base text-slate-900"
-                placeholder="Nhập tên lớp"
+                placeholder="VD: 20"
                 placeholderTextColor="#9CA3AF"
-                value={className}
-                onChangeText={setClassName}
+                keyboardType="numeric"
+                value={questionCount}
+                onChangeText={setQuestionCount}
               />
             </View>
 
+            {/* nút */}
             <View className="flex-row">
               <TouchableOpacity
                 className="flex-1 mr-2 bg-slate-200 rounded-2xl py-3 items-center"
@@ -166,7 +187,7 @@ const ManageClassScreen: React.FC = () => {
               </TouchableOpacity>
               <TouchableOpacity
                 className="flex-1 ml-2 bg-indigo-600 rounded-2xl py-3 items-center"
-                onPress={handleSaveClass}
+                onPress={handleSaveExercise}
               >
                 <Text className="text-white font-semibold">Lưu</Text>
               </TouchableOpacity>
@@ -178,4 +199,4 @@ const ManageClassScreen: React.FC = () => {
   );
 };
 
-export default ManageClassScreen;
+export default GradeListScreen;

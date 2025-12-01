@@ -39,11 +39,11 @@ const ExamDetailScreen: React.FC = () => {
   return (
     <SafeAreaView className="flex-1 bg-slate-100">
       {/* Header xanh */}
-      <View className="bg-indigo-600 pt-2 pb-3 px-4">
-        <View className="flex-row items-center justify-between mb-3">
+      <View className="bg-indigo-600 pb-3 px-4 pt-10">
+        {/* <View className="flex-row items-center justify-between mb-3">
           <Text className="text-xs text-white">23:25</Text>
           <Text className="text-xs text-white">•••</Text>
-        </View>
+        </View> */}
 
         <View className="flex-row items-center justify-between">
           <TouchableOpacity

@@ -1,0 +1,41 @@
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# VSCode
+.vscode/
+
+# Byte-compiled / cache
+*.log
+*.pot
+*.pyc
+.pytest_cache/
+.cache/
+.mypy_cache/
+
+# Environment variables
+.env
+.env.*
+
+# Flask instance folder
+instance/
+
+# SQLite database (nếu không muốn đẩy DB)
+*.db
+
+# OS files
+.DS_Store
+Thumbs.db

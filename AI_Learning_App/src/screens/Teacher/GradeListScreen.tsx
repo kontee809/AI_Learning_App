@@ -1,5 +1,4 @@
-// screens/GradeListScreen.tsx
-import React, { useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   SafeAreaView,
   View,
@@ -9,25 +8,30 @@ import {
   TextInput,
   TouchableOpacity,
   Pressable,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-type GradeItem = {
-  id: string;
+const API_URL = "http://10.0.2.2:5000";
+
+type AssignmentItem = {
+  id: number;
   title: string;
-  datetime: string;
-  score: number;
+  created_at: string;
+  max_score: number;
+  question_count: number;
 };
-
-const DUMMY_GRADES: GradeItem[] = [
-  { id: "1", title: "TEST 1", datetime: "25/11/2025, 09:52", score: 10,  },
-  { id: "2", title: "TEST 2", datetime: "25/12/2025, 09:52", score: 10,  },
-];
 
 const GradeListScreen: React.FC = () => {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
-  const { className = "" } = route.params || {};
+
+  const { classId, className } = route.params;
+
+  const [assignments, setAssignments] = useState<AssignmentItem[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [exerciseTitle, setExerciseTitle] = useState("");
@@ -43,23 +47,108 @@ const GradeListScreen: React.FC = () => {
 
   const closeModal = () => setIsModalVisible(false);
 
-  const handleSaveExercise = () => {
-    // TODO: lưu dữ liệu bài kiểm tra
-    console.log({
-      exerciseTitle,
-      exerciseScore,
-      questionCount,
-    });
-    closeModal();
+  const formatDate = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleString("vi-VN");
   };
 
-  const renderItem = ({ item }: { item: GradeItem }) => (
+  // ---------------- FETCH ASSIGNMENTS ----------------
+  const fetchAssignments = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return;
+
+      const res = await fetch(`${API_URL}/assignments/class/${classId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+      console.log("Fetch assignment response:", data);
+
+      if (!res.ok) {
+        Alert.alert("Lỗi", data.message || "Không tải được danh sách bài tập");
+        return;
+      }
+
+      setAssignments(data);
+    } catch (err) {
+      console.log("Fetch assignments error:", err);
+      // KHÔNG ALERT → tránh gây hiểu lầm
+    } finally {
+      setLoading(false);
+    }
+  }, [classId]);
+
+  useEffect(() => {
+    fetchAssignments();
+  }, [fetchAssignments]);
+
+  // ---------------- CREATE ASSIGNMENT ----------------
+  const handleSaveExercise = async () => {
+    if (!exerciseTitle.trim() || !exerciseScore || !questionCount) {
+      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ thông tin");
+      return;
+    }
+
+    const score = parseInt(exerciseScore, 10);
+    const count = parseInt(questionCount, 10);
+
+    if (isNaN(score) || isNaN(count)) {
+      Alert.alert("Lỗi", "Số điểm và số câu phải là số hợp lệ");
+      return;
+    }
+
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return;
+
+      const res = await fetch(`${API_URL}/assignments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          class_id: classId,
+          title: exerciseTitle.trim(),
+          max_score: score,
+          question_count: count,
+        }),
+      });
+
+      const data = await res.json();
+      console.log("Create assignment response:", data);
+
+      if (!res.ok) {
+        Alert.alert("Lỗi", data.message || "Không tạo được bài tập");
+        return;
+      }
+
+      if (data.assignment) {
+        // THÊM VÀO DANH SÁCH
+        setAssignments((prev) => [data.assignment, ...prev]);
+      }
+
+      closeModal();
+
+      // Reload lại danh sách
+      await fetchAssignments();
+    } catch (err) {
+      console.log("Create assignment error:", err);
+      // KHÔNG ALERT lỗi ở đây nữa
+    }
+  };
+
+  // ---------------- RENDER ITEM ----------------
+  const renderItem = ({ item }: { item: AssignmentItem }) => (
     <Pressable
       className="bg-white rounded-2xl px-4 py-3 mb-3 flex-row items-center justify-between"
       onPress={() =>
         navigation.navigate("ExamDetail", {
           examId: item.id,
-          examTitle: item.title,   // hoặc truyền thêm className nếu muốn
+          examTitle: item.title,
         })
       }
     >
@@ -67,129 +156,100 @@ const GradeListScreen: React.FC = () => {
         <Text className="text-base font-semibold text-slate-900">
           {item.title}
         </Text>
-        <Text className="text-xs text-slate-500 mt-1">{item.datetime}</Text>
+        <Text className="text-xs text-slate-500 mt-1">
+          {formatDate(item.created_at)}
+        </Text>
       </View>
 
       <Text className="text-base font-semibold text-slate-900">
-        {item.score}
+        {item.question_count}
       </Text>
     </Pressable>
   );
 
   return (
     <SafeAreaView className="flex-1 bg-slate-100">
-      {/* Header */}
-      <View className="bg-indigo-600 pt-2 pb-3 px-4">
-        <View className="flex-row items-center justify-between mb-3">
-          <Text className="text-xs text-white">21:52</Text>
-          <Text className="text-xs text-white">•••</Text>
-        </View>
+      {/* HEADER */}
+      <View className="bg-indigo-600 pt-10 pb-3 px-4 flex-row items-center justify-between">
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text className="text-2xl text-white">‹</Text>
+        </TouchableOpacity>
 
-        <View className="flex-row items-center justify-between">
-          <TouchableOpacity
-            className="w-8 h-8 items-center justify-center"
-            onPress={() => navigation.goBack()}
-          >
-            <Text className="text-2xl text-white">‹</Text>
-          </TouchableOpacity>
+        <Text className="text-base font-semibold text-white">{className}</Text>
 
-          <Text className="text-base font-semibold text-white">
-            {className}
-          </Text>
-
-          <TouchableOpacity
-            activeOpacity={0.6}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            className="w-8 h-8 items-center justify-center rounded-full"
-            onPress={openModal}
-          >
-            <Text className="text-2xl text-white">＋</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={openModal}>
+          <Text className="text-2xl text-white">＋</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Nội dung */}
-      <View className="flex-1 px-4 pt-4 bg-slate-100">
-        <FlatList
-          data={DUMMY_GRADES}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 40 }}
-        />
+      {/* CONTENT */}
+      <View className="flex-1 px-4 pt-4">
+        {loading ? (
+          <ActivityIndicator />
+        ) : (
+          <FlatList
+            data={assignments}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={renderItem}
+            contentContainerStyle={{ paddingBottom: 40 }}
+          />
+        )}
       </View>
 
-      {/* Modal tạo bài kiểm tra */}
-      <Modal
-        visible={isModalVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={closeModal}
-      >
+      {/* MODAL */}
+      <Modal visible={isModalVisible} animationType="slide" transparent>
         <View className="flex-1 justify-end bg-black/40">
           <View className="bg-white rounded-t-3xl px-4 pt-4 pb-6">
-            <View className="w-12 h-1.5 bg-slate-300 rounded-full self-center mb-4" />
             <Text className="text-base font-semibold text-center mb-4">
               Thêm bài kiểm tra
             </Text>
 
-            {/* Tên bài */}
-            <Text className="text-sm font-semibold text-slate-800 mb-2">
-              Tên bài
-            </Text>
-            <View className="bg-slate-100 rounded-2xl px-4 py-2 mb-4">
+            {/* TÊN BÀI */}
+            <Text className="font-semibold mb-1">Tên bài</Text>
+            <View className="bg-slate-100 rounded-2xl px-4 py-2 mb-3">
               <TextInput
-                className="text-base text-slate-900"
-                placeholder="VD: Bài kiểm tra 15 phút"
-                placeholderTextColor="#9CA3AF"
                 value={exerciseTitle}
                 onChangeText={setExerciseTitle}
+                placeholder="VD: KT 15 phút"
               />
             </View>
 
-            {/* Số điểm bài trắc nghiệm */}
-            <Text className="text-sm font-semibold text-slate-800 mb-2">
-              Số điểm bài trắc nghiệm
-            </Text>
-            <View className="bg-slate-100 rounded-2xl px-4 py-2 mb-4">
+            {/* SỐ ĐIỂM */}
+            <Text className="font-semibold mb-1">Số điểm tối đa</Text>
+            <View className="bg-slate-100 rounded-2xl px-4 py-2 mb-3">
               <TextInput
-                className="text-base text-slate-900"
-                placeholder="VD: 10"
-                placeholderTextColor="#9CA3AF"
-                keyboardType="numeric"
                 value={exerciseScore}
+                keyboardType="numeric"
                 onChangeText={setExerciseScore}
+                placeholder="VD: 10"
               />
             </View>
 
-            {/* Số câu hỏi */}
-            <Text className="text-sm font-semibold text-slate-800 mb-2">
-              Số câu hỏi
-            </Text>
+            {/* SỐ CÂU */}
+            <Text className="font-semibold mb-1">Số câu hỏi</Text>
             <View className="bg-slate-100 rounded-2xl px-4 py-2 mb-6">
               <TextInput
-                className="text-base text-slate-900"
-                placeholder="VD: 20"
-                placeholderTextColor="#9CA3AF"
-                keyboardType="numeric"
                 value={questionCount}
+                keyboardType="numeric"
                 onChangeText={setQuestionCount}
+                placeholder="VD: 20"
               />
             </View>
 
-            {/* nút */}
+            {/* BUTTON */}
             <View className="flex-row">
               <TouchableOpacity
                 className="flex-1 mr-2 bg-slate-200 rounded-2xl py-3 items-center"
                 onPress={closeModal}
               >
-                <Text className="text-slate-700 font-semibold">Hủy</Text>
+                <Text>Hủy</Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 className="flex-1 ml-2 bg-indigo-600 rounded-2xl py-3 items-center"
                 onPress={handleSaveExercise}
               >
-                <Text className="text-white font-semibold">Lưu</Text>
+                <Text className="text-white">Lưu</Text>
               </TouchableOpacity>
             </View>
           </View>

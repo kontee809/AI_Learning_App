@@ -8,7 +8,12 @@ import {
   Alert,
 } from "react-native";
 
-const API_URL = "http://192.168.1.210:5000"; 
+//phone
+//const API_URL = "http://192.168.1.210:5000"; 
+
+//virtual
+const API_URL = "http://10.0.2.2:5000";
+
 // ⚠️ Android Emulator dùng 10.0.2.2 thay cho localhost
 // Nếu bạn dùng device thật → đổi thành IPv4 của laptop: 192.168.x.x
 
@@ -33,24 +38,34 @@ const RegisterScreen = ({ navigation }: any) => {
           full_name: fullName,
           email,
           password,
-          role: "TEACHER", // hoặc STUDENT — tùy bạn
+          role: "TEACHER",
         }),
       });
 
-      const data = await res.json();
+      console.log("Register status:", res.status);
+
+      let data: any = null;
+      try {
+        const text = await res.text();
+        console.log("Raw response:", text);
+        data = text ? JSON.parse(text) : null;
+      } catch (e) {
+        console.log("JSON parse error:", e);
+      }
 
       if (!res.ok) {
-        Alert.alert("Đăng ký thất bại", data.message || "Có lỗi xảy ra");
+        Alert.alert("Đăng ký thất bại", data?.message || `Lỗi ${res.status}`);
         return;
       }
 
       Alert.alert("Thành công", "Tạo tài khoản thành công");
-      navigation.navigate("Login"); // quay lại login sau khi đăng ký
+      navigation.navigate("Login");
     } catch (error) {
       Alert.alert("Lỗi kết nối", "Không thể kết nối tới server");
-      console.log("Register error:", error);
+      console.log("Register error (catch):", error);
     }
   };
+
 
   return (
     <View style={styles.container}>

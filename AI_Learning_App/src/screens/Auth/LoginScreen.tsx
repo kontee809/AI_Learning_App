@@ -10,7 +10,11 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const API_URL = "http://192.168.1.210:5000";
+//phone
+// const API_URL = "http://192.168.1.210:5000"; 
+
+//virtual
+const API_URL = "http://10.0.2.2:5000";
 
 const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState("");

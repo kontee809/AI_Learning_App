@@ -15,6 +15,8 @@ from models.exam_answer import ExamAnswer
 
 # Import blueprint
 from routes.auth_routes import auth_bp
+from routes.class_routes import class_bp
+from routes.assignment_routes import assignment_bp
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -29,6 +31,10 @@ CORS(app, supports_credentials=True)
 
 # Đăng ký blueprint
 app.register_blueprint(auth_bp)
+# Tạo lớp
+app.register_blueprint(class_bp) 
+#Tạo bài tập
+app.register_blueprint(assignment_bp)
 
 # Tạo bảng
 with app.app_context():

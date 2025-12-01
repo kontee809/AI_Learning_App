@@ -3,7 +3,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import (
     create_access_token,
     jwt_required,
-    get_jwt_identity
+    get_jwt_identity,
+    get_jwt
 )
 
 from core.database import db
@@ -28,7 +29,6 @@ def register():
     if role not in ["TEACHER", "STUDENT"]:
         return jsonify({"message": "role chỉ được TEACHER hoặc STUDENT"}), 400
 
-    # Check email đã tồn tại chưa
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
         return jsonify({"message": "Email đã được sử dụng"}), 400
@@ -68,16 +68,13 @@ def login():
         return jsonify({"message": "Thiếu email hoặc password"}), 400
 
     user = User.query.filter_by(email=email).first()
-    if not user:
+    if not user or not check_password_hash(user.password_hash, password):
         return jsonify({"message": "Sai email hoặc mật khẩu"}), 401
 
-    if not check_password_hash(user.password_hash, password):
-        return jsonify({"message": "Sai email hoặc mật khẩu"}), 401
-
-    # identity có thể là id, hoặc dict (id + role)
+    # 🔥 TRUYỀN ID DƯỚI DẠNG STRING CHO CHẮC
     access_token = create_access_token(
-        identity={
-            "id": user.id,
+        identity=str(user.id),
+        additional_claims={
             "role": user.role,
             "full_name": user.full_name
         }
@@ -95,12 +92,15 @@ def login():
     }), 200
 
 
-# ------------ ROUTE ĐƯỢC BẢO VỆ BỞI JWT ------------
+# ------------ /me ------------
 @auth_bp.route("/me", methods=["GET"])
 @jwt_required()
 def me():
-    current_user = get_jwt_identity()  # chính là identity đã truyền khi tạo token
+    user_id = get_jwt_identity()   # string
+    claims = get_jwt()
+
     return jsonify({
-        "message": "Thông tin từ token",
-        "user": current_user
+        "id": int(user_id),
+        "full_name": claims.get("full_name"),
+        "role": claims.get("role")
     }), 200
